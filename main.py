@@ -8,7 +8,10 @@
 # I also import try3 which is the python file i wrote with the checkers board class and checkers piece class
 import pygame
 from pygame.locals import * 
-from try3 import *
+from board import *
+import pygame_textinput # DO NOT REMOVE : without it the game doesn't launches, dunno why
+import json
+from inputbox import InputBox
 
 
 # This first part is for initialization 
@@ -19,14 +22,15 @@ pygame.display.set_caption('Checkers Game')
 thumb = pygame.image.load("assets/checkers_thumb.png").convert_alpha() 
 pygame.display.set_icon(thumb)
 myfont = pygame.font.SysFont('Deja Vu Sans', 20)
-myotherfont = pygame.font.SysFont('Arial', 70) 
+myotherfont = pygame.font.SysFont('Arial', 70)
+titlefont = pygame.font.SysFont('Deja Vu Sans', 60) 
 check_sound = pygame.mixer.Sound("assets/gun.wav")
 end_sound = pygame.mixer.Sound("assets/TADA.wav")
 ebony = pygame.image.load("assets/ebony_re.png").convert_alpha() # I load the blacks checkers piece png image file i created using microsoft paint 
 ivory = pygame.image.load("assets/ivory_re.png").convert_alpha() # I load the whites checkers piece png image file i created using microsoft paint
 ebony_k = pygame.image.load("assets/ebony_king.png").convert_alpha() # I load the blacks checkers king piece png image file i created using microsoft paint
 ivory_k = pygame.image.load("assets/ivory_king.png").convert_alpha() # I load the whites king checkers piece png image file i created using microsoft paint
-continuer = 0 # Pygame loop variable 
+continuer = 2 # Pygame loop variable 
 l = [] # This is a list i will be using of all the pieces on the board during the game 
 clicked = 0 # This is a variable i used to implement the drag and drop functionality where 0 is nothing dragged and 1 a piece is dragged
 case_click = None # same as the variable above but for storing the checkers piece being dragged 
@@ -42,7 +46,94 @@ lines = 'ABCDEFGH'
 columns = '12345678'
 log_whites = [] # log of n past moves, see function add_log()
 log_blacks = []
+connected = False
+btnClicked = False
+playername = ""
 # This second part is for the functions i use to move checkers pieces and show the checkers board
+
+def connect(data):
+	global connected, continuer, playername
+
+	ddata = json.loads(data)
+	playername = "Ano" if ddata['name'] == '' else ddata['name']
+	address = "nope" if ddata['address'] == '' else ddata['address']
+	port = "nope" if ddata['port'] == '' else ddata['port']
+
+	if address=="nope" or port=="nope":
+		return False
+	else:
+		connected = True
+		continuer = 0
+		return True
+
+
+def show_menu():
+	global connected, continuer, btnClicked
+		
+	pygame.draw.rect(fenetre, (117, 117, 163), [0,0,1000,600])
+	textsurface = titlefont.render('Checkers', False, (0,0,0))
+	fenetre.blit(textsurface, (325, 50))
+
+	clock = pygame.time.Clock()
+
+	input_box1 = InputBox(350, 225, 140, 32)
+	textsurface = myfont.render('Nom d\'utilisateur :', False, (0,0,0))
+	fenetre.blit(textsurface, (350, 200))
+
+	input_box2 = InputBox(350, 300, 140, 32)
+	textsurface = myfont.render('Adresse :', False, (0,0,0))
+	fenetre.blit(textsurface, (350, 275))
+
+	input_box3 = InputBox(350, 375, 140, 32)
+	textsurface = myfont.render('Port :', False, (0,0,0))
+	fenetre.blit(textsurface, (350, 350))
+
+	# Connect button
+	if btnClicked == True:
+		pygame.draw.rect(fenetre, (0,0,0), [370,435,160,60])
+	pygame.draw.rect(fenetre,(200,200,200), [375, 440, 150, 50])
+	textsurface = myfont.render('Connect', False, (0,0,0))
+	fenetre.blit(textsurface, (405, 450))
+	input_boxes = [input_box1, input_box2, input_box3]
+	done = False
+
+	while not done:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				done = True
+				connected = True
+				continuer = 1
+
+			if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and (event.pos[0]>375 and event.pos[0]<525) and (event.pos[1]>440 and event.pos[1]<490):
+				btnClicked = True
+				x = {
+					"name": input_box1.text,
+					"address": input_box2.text,
+					"port": input_box3.text
+				}
+				y = json.dumps(x)
+				print(connect(y))
+				done = connect(y)
+				
+			for box in input_boxes:
+				box.handle_event(event)
+
+		for box in input_boxes:
+			box.update()
+
+		for box in input_boxes:
+			box.draw(fenetre)
+
+		pygame.display.flip()
+		clock.tick(30)
+	pygame.display.flip()
+
+
+# This function handle the player switch
+def player_switch():
+	global turni
+	turni = turni*-1
+	print("Player switch")
 
 # This functions converts a couple [i,j] into a position on the screen, i use it to put the checkers pieces in their place on the board
 def from_cord_to_pos(i,j):
@@ -123,7 +214,7 @@ def show_board():
 	global end_sound
 	#  right rect : gray
 	pygame.draw.rect(fenetre, (117, 117, 163), [500,0,500,600])
-	textsurface = myfont.render('Player 1', False, (0,0,0))
+	textsurface = myfont.render(playername, False, (0,0,0))
 	fenetre.blit(textsurface, (650, 50))
 	textsurface = myfont.render('Player 2', False, (0,0,0))
 	fenetre.blit(textsurface, (750, 50))
@@ -192,13 +283,13 @@ def show_board():
 			textsurface = myfont.render('Invalid move', False, (200, 0, 0))
 			fenetre.blit(textsurface, (250,500))
 		if turni == 1:
-			textsurface = myfont.render('Player 1 plays', False, (0, 0, 0))
+			textsurface = myfont.render(playername + ' plays', False, (0, 0, 0))
 			fenetre.blit(textsurface, (60,500))
 		else :
 			textsurface = myfont.render('Player 2 plays', False, (0, 0, 0))
 			fenetre.blit(textsurface, (60,500))
 	elif game() == 1:
-		textsurface = myfont.render('Player 1 won', False, (0, 0, 0))
+		textsurface = myfont.render(playername + ' won', False, (0, 0, 0))
 		fenetre.blit(textsurface, (60,500))
 	elif game() == -1:
 		textsurface = myfont.render('Player 2 won', False, (0, 0, 0))
@@ -273,7 +364,8 @@ def move_case(i,j,r,m):
 				l[get_case(r,m)][0].king = 1
 			if l[get_case(r,m)][0].player == -1 and r==0 and l[get_case(r,m)][0].king == 0 :
 				l[get_case(r,m)][0].king = 1
-			turni = -1*turni
+			# TODO Handle turni switch
+			player_switch()
 			add_log(i,j,r,m)
 			if game() != 2:
 				end_sound.play()
@@ -291,7 +383,8 @@ def move_case(i,j,r,m):
 			if l[get_case(r,m)][0].player == -1 and r==0 and l[get_case(r,m)][0].king == 0 :
 				l[get_case(r,m)][0].king = 1
 			if l[get_case(r,m)][0].get_caps() == [[],[]]:
-				turni = turni*-1
+				# TODO Also turni here
+				player_switch()
 				if suree == 1:
 					suree = 0
 			if l[get_case(r,m)][0].get_caps() != [[],[]] :
@@ -313,6 +406,19 @@ def drag_case(i,r,m):
 # This initializes the list l from the list case_list explained in the comments of file try3 
 for case in bb.case_list:
 	l.append([case,[50*(case.pos[0]+1)+7,50*(case.pos[1]+1)+7]])
+
+
+#menu loop
+while not connected:
+	for event in pygame.event.get():
+		# if event.type == MOUSEBUTTONDOWN:
+		# 	continuer = 0
+		# 	connected = True
+		if event.type == QUIT:
+			connected= True
+			continuer = 1
+	show_menu()
+	pygame.display.flip()
 	
 # The pygame loop
 while continuer == 0:
@@ -352,6 +458,8 @@ while continuer == 0:
 					invalid = 1
 				else :
 					invalid = 0
+					#TODO Handle Serv board transmission here
+					print("Move handled here")
 			else :
 				move_case(*l[case_click][0].pos,*l[case_click][0].pos)
 				invalid = 1
