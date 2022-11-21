@@ -11,6 +11,7 @@ from pygame.locals import *
 from board import *
 import pygame_textinput # DO NOT REMOVE : without it the game doesn't launches, dunno why
 import json
+from client import Client
 from inputbox import InputBox
 
 
@@ -49,10 +50,11 @@ log_blacks = []
 connected = False
 btnClicked = False
 playername = ""
+client = Client
 # This second part is for the functions i use to move checkers pieces and show the checkers board
 
 def connect(data):
-	global connected, continuer, playername
+	global connected, continuer, playername, client
 
 	ddata = json.loads(data)
 	playername = "Ano" if ddata['name'] == '' else ddata['name']
@@ -62,6 +64,10 @@ def connect(data):
 	if address=="nope" or port=="nope":
 		return False
 	else:
+		# TODO Make the serv connection here
+		client= Client(playername, address, int(port))
+		client.listen()
+
 		connected = True
 		continuer = 0
 		return True
@@ -424,6 +430,9 @@ while not connected:
 while continuer == 0:
 	for event in pygame.event.get():
 		if event.type == QUIT:
+			client.handle_msg("QUIT")
+			client.tidy_up()
+			#  TODO Know how to close the connection
 			continuer = 1
 		if event.type == MOUSEBUTTONDOWN and event.button == 1 and clicked == 0 and game() == 2:
 			if from_pos_to_cord(event.pos[0],event.pos[1]) != None:
