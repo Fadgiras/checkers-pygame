@@ -51,6 +51,7 @@ connected = False
 btnClicked = False
 playername = ""
 client = Client
+transmitted = False
 # This second part is for the functions i use to move checkers pieces and show the checkers board
 
 def connect(data):
@@ -67,11 +68,22 @@ def connect(data):
 		# TODO Make the serv connection here
 		client= Client(playername, address, int(port))
 		client.listen()
-
+		# TODO Make a little text as waiting screen
 		connected = True
 		continuer = 0
-		return True
+		return connected
 
+def transmitData(i,j,r,m):
+	global client
+	x = {
+		"oldx" : i,
+		"oldy" : j,
+		"newx" : r,
+		"newy" : m,
+		"playername" : playername
+	}
+	y =  json.dumps(x)
+	client.send(y)
 
 def show_menu():
 	global connected, continuer, btnClicked
@@ -139,7 +151,7 @@ def show_menu():
 def player_switch():
 	global turni
 	turni = turni*-1
-	print("Player switch")
+	# print("Player switch")
 
 # This functions converts a couple [i,j] into a position on the screen, i use it to put the checkers pieces in their place on the board
 def from_cord_to_pos(i,j):
@@ -354,7 +366,7 @@ def cap_can(play):
 	return 0
 	
 # This is the important function in this script as it evaluates the click of the user (player, turn, capture, ...) and changes the position of the checkers piece on the board
-def move_case(i,j,r,m):
+def move_case(i,j,r,m,transmitted:bool):
 	global turni
 	global l
 	global suree
@@ -372,6 +384,8 @@ def move_case(i,j,r,m):
 				l[get_case(r,m)][0].king = 1
 			# TODO Handle turni switch
 			player_switch()
+			if (transmitted == False) :
+				transmitData(i,j,r,m)
 			add_log(i,j,r,m)
 			if game() != 2:
 				end_sound.play()
@@ -395,6 +409,8 @@ def move_case(i,j,r,m):
 					suree = 0
 			if l[get_case(r,m)][0].get_caps() != [[],[]] :
 				suree = 1
+			if (transmitted == False):
+				transmitData(i,j,r,m)
 			add_log(i,j,r,m)
 			if game() != 2:
 				end_sound.play()
@@ -463,14 +479,20 @@ while continuer == 0:
 			drag_case(case_click,event.pos[0]-15,event.pos[1]-15)
 		if event.type == MOUSEBUTTONUP and clicked == 1:
 			if from_pos_to_cord(event.pos[0],event.pos[1]) != None:
-				if move_case(*l[case_click][0].pos,*from_pos_to_cord(event.pos[0],event.pos[1])) == 0:
+				if move_case(*l[case_click][0].pos,*from_pos_to_cord(event.pos[0],event.pos[1]),False) == 0:
 					invalid = 1
 				else :
 					invalid = 0
 					#TODO Handle Serv board transmission here
+					# x = {
+					# 	"player": playername,
+					# 	"movement" : (*l[case_click][0].pos,*l[case_click][0].pos)
+					# }
+					# y =  json.dumps(x)
+					# client.send(y)
 					print("Move handled here")
 			else :
-				move_case(*l[case_click][0].pos,*l[case_click][0].pos)
+				move_case(*l[case_click][0].pos,*l[case_click][0].pos,False)
 				invalid = 1
 			sur = []
 			sure = []

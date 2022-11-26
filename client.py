@@ -1,3 +1,4 @@
+import json
 import threading
 import socket
 import time
@@ -32,7 +33,7 @@ class Client():
             username_result = re.search('^USERNAME (.*)$', message)
             if not username_result:
                 # TODO Change data format here
-                message= "{0}: {1}".format(self.username, message)
+                message= "{1}".format(self.username, message)
             self.socket.sendall(message.encode("UTF-8"))
         except socket.error:
             print("unable to send message")
@@ -46,8 +47,14 @@ class Client():
             self.tidy_up()
         elif data=="":
             self.tidy_up()
-        else:
-            print(data)
+        elif data[0]=="{" :
+            x = json.loads(data)
+            from main import playername
+            print(x.playername != playername)
+            if (x.playername != playername):
+                from main import move_case
+                move_case(x.oldx, x.oldy, x.newx, x.newy, True)
+        
 
 # if __name__ == "__main__":
 #     username= input("username: ")
