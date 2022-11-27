@@ -1,5 +1,7 @@
 import pygame
 
+pygame.font.init()
+
 COLOR_INACTIVE = pygame.Color((0,0,0))
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
 FONT = pygame.font.SysFont('Deja Vu Sans', 20)

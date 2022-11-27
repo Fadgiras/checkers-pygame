@@ -1,21 +1,22 @@
-from socket import socket
+import socket
 import threading
 import re
 import time
 
+
 class ClientListener(threading.Thread):
 
-    def __init__(self, server, socket, address):
+    def __init__(self, server, soc, address):
         super(ClientListener, self).__init__()
-        self.server= server
-        self.socket= socket
-        self.address= address
-        self.listening= True
-        self.username= "No username"
+        self.server = server
+        self.socket = soc
+        self.address = address
+        self.listening = True
+        self.username = "No username"
 
     def run(self):
         while self.listening:
-            data= ""
+            data = ""
             try:
                 data = self.socket.recv(4096).decode('UTF-8')
             except socket.error:
@@ -42,4 +43,3 @@ class ClientListener(threading.Thread):
             self.quit()
         else:
             self.server.echo(data)
-
