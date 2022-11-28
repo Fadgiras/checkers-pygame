@@ -21,7 +21,13 @@ class Client:
                 data = self.socket.recv(4096).decode('UTF-8')
             except socket.error:
                 print("Unable to receive data")
-            self.on_listen(data[oldx], data[oldy], data[newx], data[newy], True)
+            print("data received")
+            if data[0] == "{":
+                ddata = json.loads(data)
+                if self.username != ddata['playername']:
+                    self.on_listen(ddata)
+                else :
+                    print("data blocked", self.socket)
             time.sleep(0.1)
 
     def listen(self):

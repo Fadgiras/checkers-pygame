@@ -58,6 +58,9 @@ transmitted = False
 
 # This second part is for the functions i use to move checkers pieces and show the checkers board
 
+def handle_data(data):
+    move_case(data['oldx'], data['oldy'], data['newx'], data['newy'], True)
+
 def connect(data):
     global connected, continuer, playername, client
 
@@ -69,8 +72,6 @@ def connect(data):
     if address == "nope" or port == "nope":
         return False
     else:
-        def handle_data(data: dict):
-            move_case(data['oldx'], data['oldy'], data['newx'], data['newy'], True)
         # TODO Make the serv connection here
         client = Client(playername, address, int(port), handle_data)
         client.listen()
@@ -472,8 +473,9 @@ while not connected:
 while continuer == 0:
     for event in pygame.event.get():
         if event.type == QUIT:
-            client.handle_msg("QUIT", playername, move_case())
+            client.handle_msg("QUIT", playername)
             client.tidy_up()
+            #  TODO Know how to close the connection
             continuer = 1
         if event.type == MOUSEBUTTONDOWN and event.button == 1 and clicked == 0 and game() == 2:
             if from_pos_to_cord(event.pos[0], event.pos[1]) != None:
