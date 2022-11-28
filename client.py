@@ -27,7 +27,7 @@ class Client:
                 if self.username != ddata['playername']:
                     self.on_listen(ddata)
                 else :
-                    print("data blocked", self.socket)
+                    print("data blocked")
             time.sleep(0.1)
 
     def listen(self):

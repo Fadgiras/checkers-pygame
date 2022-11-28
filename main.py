@@ -51,18 +51,47 @@ log_whites = []  # log of n past moves, see function add_log()
 log_blacks = []
 connected = False
 btnClicked = False
+
 playername = ""
+player2 = "Player 2"
+p1disp = playername
+p2disp = player2
 client: Client
 transmitted = False
+hasPlayed = False
+isFirst = False
 
 
 # This second part is for the functions i use to move checkers pieces and show the checkers board
 
+def first(transmitted : bool, trPlayer):
+    global hasPlayed, player2, playername, p2disp, p1disp, isFirst
+    # print("init")
+    # print( hasPlayed, isFirst)
+    if (transmitted and not hasPlayed):
+        # print("init switch")
+        
+        p2disp = playername
+        p1disp = player2
+        hasPlayed = True
+    
+    elif (not transmitted and not hasPlayed):
+        # print("init first")
+        hasPlayed = True
+        isFirst = True
+
+    elif (hasPlayed and isFirst):
+        p2disp = player2
+        print(p1disp + " " + p2disp )
+
+
 def handle_data(data):
+    global player2, p2disp
+    player2 = data['playername']
     move_case(data['oldx'], data['oldy'], data['newx'], data['newy'], True)
 
 def connect(data):
-    global connected, continuer, playername, client
+    global connected, continuer, playername, client, p1disp
 
     ddata = json.loads(data)
     playername = "Ano" if ddata['name'] == '' else ddata['name']
@@ -72,10 +101,12 @@ def connect(data):
     if address == "nope" or port == "nope":
         return False
     else:
-        # TODO Make the serv connection here
         client = Client(playername, address, int(port), handle_data)
         client.listen()
-        # TODO Make a little text as waiting screen
+        
+        # need this line for the p1disp init
+        p1disp = playername
+        
         connected = True
         continuer = 0
         return connected
@@ -93,6 +124,8 @@ def transmitData(i, j, r, m):
     y = json.dumps(x)
     client.send(y)
 
+
+# ============================== Menu
 
 def show_menu():
     global connected, continuer, btnClicked
@@ -140,7 +173,6 @@ def show_menu():
                     "port": input_box3.text
                 }
                 y = json.dumps(x)
-                print(connect(y))
                 done = connect(y)
 
             for box in input_boxes:
@@ -156,14 +188,12 @@ def show_menu():
         clock.tick(30)
     pygame.display.flip()
 
+# ============================== Menu
 
 # This function handle the player switch
 def player_switch():
     global turni
     turni = turni * -1
-
-
-# print("Player switch")
 
 # This functions converts a couple [i,j] into a position on the screen, i use it to put the checkers pieces in their place on the board
 def from_cord_to_pos(i, j):
@@ -251,10 +281,11 @@ def show_board():
     global butt_click
     global end_sound
     #  right rect : gray
+    # ==============================Drawing board
     pygame.draw.rect(fenetre, (117, 117, 163), [500, 0, 500, 600])
     textsurface = myfont.render(playername, False, (0, 0, 0))
     fenetre.blit(textsurface, (650, 50))
-    textsurface = myfont.render('Player 2', False, (0, 0, 0))
+    textsurface = myfont.render(player2, False, (0, 0, 0))
     fenetre.blit(textsurface, (750, 50))
     pygame.draw.line(fenetre, (0, 0, 0), [640, 49], [835, 49])
     pygame.draw.line(fenetre, (0, 0, 0), [640, 82], [835, 82])
@@ -303,12 +334,15 @@ def show_board():
 
     # Background color switch
     if turni == 1 and game() == 2:
-        pygame.draw.circle(fenetre, (51, 18, 0), [225, 575], 15)
+        pygame.draw.circle(fenetre, (136, 0, 27), [225, 575], 15)
     if turni == -1 and game() == 2:
-        pygame.draw.circle(fenetre, (254, 243, 199), [275, 575], 15)
+        pygame.draw.circle(fenetre, (253, 236, 166), [275, 575], 15)
     if game() != 2:
         pygame.draw.rect(fenetre, (0, 210, 0), [0, 0, 500, 600])
 
+    # ============================== end drawing board
+
+    # ============================== Texts on the screen
     for letter in range(0, 8):
         for number in range(0, 8):
             textsurface = myfont.render(lines[letter], False, (0, 0, 0))
@@ -319,25 +353,29 @@ def show_board():
     if game() == 2:
         if suree == 1:
             textsurface = myfont.render('Still has to play', False, (0, 0, 0))
-            fenetre.blit(textsurface, (60, 550))
+            fenetre.blit(textsurface, (250, 500))
         if invalid == 1:
             textsurface = myfont.render('Invalid move', False, (200, 0, 0))
             fenetre.blit(textsurface, (250, 500))
         if turni == 1:
-            textsurface = myfont.render(playername + ' plays', False, (0, 0, 0))
+            textsurface = myfont.render(p1disp + ' plays', False, (0, 0, 0))
             fenetre.blit(textsurface, (60, 500))
         else:
-            textsurface = myfont.render('Player 2 plays', False, (0, 0, 0))
+            textsurface = myfont.render(p2disp+ ' plays', False, (0, 0, 0))
             fenetre.blit(textsurface, (60, 500))
     elif game() == 1:
-        textsurface = myfont.render(playername + ' won', False, (0, 0, 0))
+        textsurface = myfont.render(p1disp + ' won', False, (0, 0, 0))
         fenetre.blit(textsurface, (60, 500))
     elif game() == -1:
-        textsurface = myfont.render('Player 2 won', False, (0, 0, 0))
+        textsurface = myfont.render(p2disp + ' won', False, (0, 0, 0))
         fenetre.blit(textsurface, (60, 500))
     else:
         textsurface = myfont.render('Its a tie', False, (0, 0, 0))
         fenetre.blit(textsurface, (60, 500))
+
+    # ============================== End Texts on the screen
+
+    # ============================== Moves indicator
     for p in range(0, 8):
         for q in range(0, 8):
             if [p, q] in sur:
@@ -375,10 +413,14 @@ def show_board():
         pygame.draw.lines(fenetre, (255, 255, 255), False, from_pos_to_cord_list(i), 3)
         for j in i:
             pygame.draw.circle(fenetre, (255, 255, 255), [50 * (j[0] + 1) + 25, 50 * (j[1] + 1) + 25], 10)
+
+    # ============================== End moves indicator
+
+    # ============================== End screen
     if game() != 2:
-        # add clean rect here
-        game_over_text = myotherfont.render('Game Over', False, (187, 244, 20))
-        fenetre.blit(game_over_text, (70, 200))
+        game_over_text = myotherfont.render('Game Over', False, (51, 18, 0))
+        fenetre.blit(game_over_text, (80, 200))
+    # ============================== End screen
 
 
 # This function tells us if player "play" has to capture a piece or he can just move to a clear position (prevents an invalid move)
@@ -395,6 +437,8 @@ def move_case(i, j, r, m, transmitted: bool):
     global turni
     global l
     global suree
+    global hasPlayed
+    global player2, playername
     k = [i, j]
     if get_case(i, j) == None:
         return 0
@@ -408,13 +452,14 @@ def move_case(i, j, r, m, transmitted: bool):
                 l[get_case(r, m)][0].king = 1
             if l[get_case(r, m)][0].player == -1 and r == 0 and l[get_case(r, m)][0].king == 0:
                 l[get_case(r, m)][0].king = 1
-            # TODO Handle turni switch
             player_switch()
             if (not transmitted):
                 transmitData(i, j, r, m)
             add_log(i, j, r, m)
             if game() != 2:
                 end_sound.play()
+            
+            first(transmitted, player2)
             return 1
         elif ([r, m] in l[get_case(i, j)][0].get_caps()[0]) and turni == l[get_case(i, j)][0].player:
             rm = l[get_case(i, j)][0].get_caps()[0].index([r, m])
@@ -429,7 +474,6 @@ def move_case(i, j, r, m, transmitted: bool):
             if l[get_case(r, m)][0].player == -1 and r == 0 and l[get_case(r, m)][0].king == 0:
                 l[get_case(r, m)][0].king = 1
             if l[get_case(r, m)][0].get_caps() == [[], []]:
-                # TODO Also turni here
                 player_switch()
                 if suree == 1:
                     suree = 0
@@ -440,9 +484,11 @@ def move_case(i, j, r, m, transmitted: bool):
             add_log(i, j, r, m)
             if game() != 2:
                 end_sound.play()
+            
+            first(transmitted, player2)
             return 1
     l[get_case(i, j)][1] = [50 * (i + 1) + 7, 50 * (j + 1) + 7]
-    invalid = 1
+    invalid = 1    
     return 0
 
 
@@ -460,9 +506,6 @@ for case in bb.case_list:
 # menu loop
 while not connected:
     for event in pygame.event.get():
-        # if event.type == MOUSEBUTTONDOWN:
-        # 	continuer = 0
-        # 	connected = True
         if event.type == QUIT:
             connected = True
             continuer = 1
@@ -475,7 +518,6 @@ while continuer == 0:
         if event.type == QUIT:
             client.handle_msg("QUIT", playername)
             client.tidy_up()
-            #  TODO Know how to close the connection
             continuer = 1
         if event.type == MOUSEBUTTONDOWN and event.button == 1 and clicked == 0 and game() == 2:
             if from_pos_to_cord(event.pos[0], event.pos[1]) != None:
@@ -512,14 +554,6 @@ while continuer == 0:
                     invalid = 1
                 else:
                     invalid = 0
-                    # TODO Handle Serv board transmission here
-                    # x = {
-                    # 	"player": playername,
-                    # 	"movement" : (*l[case_click][0].pos,*l[case_click][0].pos)
-                    # }
-                    # y =  json.dumps(x)
-                    # client.send(y)
-                    print("Move handled here")
             else:
                 move_case(*l[case_click][0].pos, *l[case_click][0].pos, False)
                 invalid = 1
