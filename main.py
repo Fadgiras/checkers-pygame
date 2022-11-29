@@ -65,7 +65,7 @@ hasSwitched = False
 
 # This second part is for the functions i use to move checkers pieces and show the checkers board
 
-def first(transmitted : bool, trPlayer):
+def first(transmitted : bool):
     global hasPlayed, player2, playername, p2disp, p1disp, isFirst, hasSwitched
     # print("init")
     # print( hasPlayed, isFirst)
@@ -84,7 +84,7 @@ def first(transmitted : bool, trPlayer):
 
     elif (hasPlayed and isFirst):
         p2disp = player2
-        print(p1disp + " " + p2disp )
+        # print(p1disp + " " + p2disp )
 
 
 def handle_data(data):
@@ -470,7 +470,7 @@ def move_case(i, j, r, m, transmitted: bool):
             if game() != 2:
                 end_sound.play()
             
-            first(transmitted, player2)
+            first(transmitted)
             return 1
         elif ([r, m] in l[get_case(i, j)][0].get_caps()[0]) and turni == l[get_case(i, j)][0].player:
             rm = l[get_case(i, j)][0].get_caps()[0].index([r, m])
@@ -496,7 +496,7 @@ def move_case(i, j, r, m, transmitted: bool):
             if game() != 2:
                 end_sound.play()
             
-            first(transmitted, player2)
+            first(transmitted)
             return 1
     l[get_case(i, j)][1] = [50 * (i + 1) + 7, 50 * (j + 1) + 7]
     invalid = 1    
