@@ -60,12 +60,13 @@ client: Client
 transmitted = False
 hasPlayed = False
 isFirst = False
+hasSwitched = False
 
 
 # This second part is for the functions i use to move checkers pieces and show the checkers board
 
 def first(transmitted : bool, trPlayer):
-    global hasPlayed, player2, playername, p2disp, p1disp, isFirst
+    global hasPlayed, player2, playername, p2disp, p1disp, isFirst, hasSwitched
     # print("init")
     # print( hasPlayed, isFirst)
     if (transmitted and not hasPlayed):
@@ -74,6 +75,7 @@ def first(transmitted : bool, trPlayer):
         p2disp = playername
         p1disp = player2
         hasPlayed = True
+        hasSwitched = True
     
     elif (not transmitted and not hasPlayed):
         # print("init first")
@@ -280,6 +282,7 @@ def show_board():
     global invalid
     global butt_click
     global end_sound
+    global hasSwitched
     #  right rect : gray
     # ==============================Drawing board
     pygame.draw.rect(fenetre, (117, 117, 163), [500, 0, 500, 600])
@@ -306,10 +309,18 @@ def show_board():
             point_one = point_one + 1
         if had.player == -1:
             point_two = point_two + 1
-    textsurface = myfont.render(str(12 - point_two), False, (0, 0, 0))
-    fenetre.blit(textsurface, (680, 80))
-    textsurface = myfont.render(str(12 - point_one), False, (0, 0, 0))
-    fenetre.blit(textsurface, (780, 80))
+
+    if hasSwitched : 
+        textsurface = myfont.render(str(12 - point_one), False, (0, 0, 0))
+        fenetre.blit(textsurface, (680, 80))
+        textsurface = myfont.render(str(12 - point_two), False, (0, 0, 0))
+        fenetre.blit(textsurface, (780, 80))
+    else : 
+        textsurface = myfont.render(str(12 - point_two), False, (0, 0, 0))
+        fenetre.blit(textsurface, (680, 80))
+        textsurface = myfont.render(str(12 - point_one), False, (0, 0, 0))
+        fenetre.blit(textsurface, (780, 80))
+
     textsurface = myfont.render("MOVE LOG", False, (0, 0, 0))
     fenetre.blit(textsurface, (690, 230))
     textsurface = myfont.render("BLACKS", False, (0, 0, 0))
